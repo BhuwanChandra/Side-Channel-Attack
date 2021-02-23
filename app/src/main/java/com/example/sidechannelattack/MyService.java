@@ -55,7 +55,7 @@ public class MyService extends Service implements SensorEventListener {
 
         int sensorType = event.sensor.getType();
         float currentValue = event.values[0];
-        long time = System.currentTimeMillis();
+        long time = event.timestamp;
         if (currentValue == currentLightValue) return;
         switch (sensorType) {
             // Event came from the light sensor.
