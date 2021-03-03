@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Date;
 public class MyService extends Service implements SensorEventListener {
     private SensorManager mSensorManager;
     private Sensor mSensorProximity;
@@ -54,10 +55,12 @@ public class MyService extends Service implements SensorEventListener {
         int sensorType = event.sensor.getType();
         float currentValue = event.values[0];
         long time = event.timestamp;
+        Date date = new Date(time);
         switch (sensorType) {
             // Event came from the light sensor.
             case Sensor.TYPE_LIGHT:
-                if (currentValue == currentLightValue) return;
+                if (Math.abs(currentValue-currentLightValue)<(0.01*currentLightValue))
+                    return;
                 fileName = "Light.csv";
                 filePath = baseDir + File.separator + fileName;
                 currentLightValue = currentValue;
@@ -70,7 +73,7 @@ public class MyService extends Service implements SensorEventListener {
                     intent.putExtra("light", light);
 //                    System.out.println("Light value is " + currentValue + " for time: " + time);
 
-                    String[] data = { light , Long.toString(time)};
+                    String[] data = { light , Long.toString(time),date.toString()};
                     writer.writeNext(data, false);
                     writer.close();
 //
@@ -80,7 +83,8 @@ public class MyService extends Service implements SensorEventListener {
 
                 break;
             case Sensor.TYPE_PROXIMITY:
-                if (currentValue == currentProxValue) return;
+                if (Math.abs(currentValue-currentProxValue)<(0.01*currentProxValue))
+                    return;
                 fileName = "Proximity.csv";
                 filePath = baseDir + File.separator + fileName;
                 currentProxValue = currentValue;
@@ -91,14 +95,14 @@ public class MyService extends Service implements SensorEventListener {
                     String prox= Float.toString(currentValue);
                     intent.putExtra("proximity", prox);
 //                    System.out.println("Light value is " + currentValue + " for time: " + time);
-                    String[] data = { prox, Long.toString(time)};
+                    String[] data = { prox, Long.toString(time),date.toString()};
                     writer.writeNext(data, false);
                     writer.close();
                 } catch (Exception e) {
 
                 }
             case Sensor.TYPE_AMBIENT_TEMPERATURE:
-                if (currentValue == currentTempValue)
+                if (Math.abs(currentValue-currentTempValue)<(0.01*currentTempValue))
                     return;
                 fileName = "Temperature.csv";
                 filePath = baseDir + File.separator + fileName;
@@ -110,7 +114,7 @@ public class MyService extends Service implements SensorEventListener {
                     String temp = Float.toString(currentValue);
                     intent.putExtra("temperature", temp);
 //                    System.out.println("Light value is " + currentValue + " for time: " + time);
-                    String[] data = { temp , Long.toString(time)};
+                    String[] data = { temp , Long.toString(time),date.toString()};
                     writer.writeNext(data, false);
                     writer.close();
                 } catch (Exception e) {
@@ -124,7 +128,9 @@ public class MyService extends Service implements SensorEventListener {
     }
 
     @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    public void onAccuracyChanged(Sensor sensor, int accuracy)
+    {
+
 
     }
     public int onStartCommand(Intent intent, int flags, int startId)
