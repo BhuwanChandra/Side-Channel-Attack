@@ -55,7 +55,7 @@ public class MyService extends Service implements SensorEventListener {
         int sensorType = event.sensor.getType();
         float currentValue = event.values[0];
         long time = event.timestamp;
-        Date date = new Date(time);
+        Date date =java.util.Calendar.getInstance().getTime();
         switch (sensorType) {
             // Event came from the light sensor.
             case Sensor.TYPE_LIGHT:
