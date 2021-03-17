@@ -25,15 +25,19 @@ public class MainActivity
     private TextView mTextSensorLight;
     private TextView mTextSensorProximity;
     private TextView mTextSensorTemperature;
+    private TextView mTextSensorPressure;
     Intent i;
     private BroadcastReceiver myBroadcastReceiver = new BroadcastReceiver() {
                 @Override
-                public void onReceive(Context context, Intent intent) {
+                public void onReceive(Context context, Intent intent)
+                {
                     String sensor_error = getResources().getString(R.string.error_no_sensor);
                     String mSensorLight = intent.getStringExtra("light");
                     String mSensorProximity = intent.getStringExtra("proximity");
                     String mSensorTemperature = intent.getStringExtra("temperature");
-                    if (mSensorLight == null) {
+                    String mSensorPressure=intent.getStringExtra("pressure");
+                    if (mSensorLight == null)
+                    {
                         mTextSensorLight.setText(sensor_error);
                     }
                     else{
@@ -56,6 +60,13 @@ public class MainActivity
                         Float x= Float.valueOf(mSensorTemperature).floatValue();
                         mTextSensorTemperature.setText("Temperature Sensor:"+String.valueOf(x));
                     }
+                    if (mSensorPressure == null) {
+                        mTextSensorPressure.setText(sensor_error);
+                    }
+                    else{
+                        Float x= Float.valueOf(mSensorPressure).floatValue();
+                        mTextSensorPressure.setText("Pressure Sensor:"+String.valueOf(x));
+                    }
                 }
             };
     @Override
@@ -65,13 +76,15 @@ public class MainActivity
         mTextSensorLight = (TextView) findViewById(R.id.label_light);
         mTextSensorProximity = (TextView) findViewById(R.id.label_proximity);
         mTextSensorTemperature=(TextView) findViewById(R.id.label_temp);
+        mTextSensorPressure=(TextView) findViewById(R.id.label_press);
         if (ContextCompat.checkSelfPermission(
                 this, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
                 PackageManager.PERMISSION_GRANTED) {
             i = new Intent(MainActivity.this, MyService.class);
             startService(i);
             registerReceiver(myBroadcastReceiver, new IntentFilter(MyService.MY_ACTION));
-        } else {
+        } else
+            {
             // You can directly ask for the permission.
             String[] permission = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
             ActivityCompat.requestPermissions(MainActivity.this, permission, 0);

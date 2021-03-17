@@ -25,9 +25,11 @@ public class MyService extends Service implements SensorEventListener {
     private Sensor mSensorProximity;
     private Sensor mSensorLight;
     private Sensor mSensorTemperature;
+    private Sensor mSensorPressure;
     private static float currentLightValue = 0;
     private static float currentProxValue=0;
     private static float currentTempValue=0;
+    private static float currentPressValue=0;
     private static String fileName;
     private static String filePath;
     private static File f;
@@ -39,7 +41,8 @@ public class MyService extends Service implements SensorEventListener {
         return null;
     }
     @Override
-    public void onCreate(){
+    public void onCreate()
+    {
        super.onCreate();
        Log.d("MyService", "onCreate");
        mSensorManager = (SensorManager) getSystemService(
@@ -48,6 +51,7 @@ public class MyService extends Service implements SensorEventListener {
                mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
        mSensorLight = mSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
        mSensorTemperature=mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
+       mSensorPressure=mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
    }
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -120,6 +124,26 @@ public class MyService extends Service implements SensorEventListener {
                 } catch (Exception e) {
 
                 }
+                //Pressure
+            case Sensor.TYPE_PRESSURE:
+                if (Math.abs(currentValue-currentPressValue)<(0.01*currentPressValue))
+                    return;
+                fileName = "Pressure.csv";
+                filePath = baseDir + File.separator + fileName;
+                currentPressValue = currentValue;
+                f = new File(filePath);
+                try {
+                    FileWriter fOut = new FileWriter(filePath, true);
+                    CSVWriter writer = new CSVWriter(fOut);
+                    String press = Float.toString(currentValue);
+                    intent.putExtra("pressure", press);
+//                    System.out.println("Light value is " + currentValue + " for time: " + time);
+                    String[] data = { press, Long.toString(time),date.toString()};
+                    writer.writeNext(data, false);
+                    writer.close();
+                } catch (Exception e)
+                {
+                }
             default:
                 // do nothing
         }
@@ -147,6 +171,10 @@ public class MyService extends Service implements SensorEventListener {
         if(mSensorTemperature!=null)
         {
             mSensorManager.registerListener(this,mSensorTemperature,SensorManager.SENSOR_DELAY_NORMAL);
+        }
+        if(mSensorPressure!=null)
+        {
+            mSensorManager.registerListener(this,mSensorPressure,SensorManager.SENSOR_DELAY_NORMAL);
         }
         return START_STICKY;
     }
