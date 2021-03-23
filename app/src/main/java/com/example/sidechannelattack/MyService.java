@@ -34,8 +34,8 @@ public class MyService extends Service implements SensorEventListener {
     private static String fileName;
     private static String filePath;
     private static File f;
+    private static String baseDir;
     final static String MY_ACTION = "com.example.sidechannelattack.MyService.MY_ACTION";
-    String baseDir = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
     HashMap<String, Float> prev = new HashMap<String, Float>();
     List<Sensor> sensorsList = new ArrayList<Sensor>();
     Intent intent = new Intent(MY_ACTION);
@@ -47,6 +47,11 @@ public class MyService extends Service implements SensorEventListener {
 
     @Override
     public void onCreate() {
+        File file = new File(android.os.Environment.getExternalStorageDirectory()+"/SCA");
+        if(!file.exists())
+            file.mkdir();
+        //String baseDir = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
+        baseDir = file.getAbsolutePath();
         mSensorManager = (SensorManager) getSystemService(
                 Context.SENSOR_SERVICE);
         List<Sensor> availableSensors = mSensorManager.getSensorList(Sensor.TYPE_ALL);
@@ -68,7 +73,7 @@ public class MyService extends Service implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        String baseDir = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
+        //String baseDir = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
         int sensorType = event.sensor.getType();
         float currentValue = event.values[0];
         long time = event.timestamp;
