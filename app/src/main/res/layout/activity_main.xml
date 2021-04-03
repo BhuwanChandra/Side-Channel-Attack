@@ -11,50 +11,79 @@
         android:id="@+id/label_light"
         android:layout_width="207dp"
         android:layout_height="25dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginBottom="532dp"
+        android:layout_marginEnd="84dp"
         android:text="Light Sensor"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent" />
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.272" />
+
 
     <TextView
         android:id="@+id/label_proximity"
         android:layout_width="227dp"
         android:layout_height="23dp"
         android:layout_marginLeft="204dp"
-        android:layout_marginEnd="28dp"
+        android:layout_marginEnd="68dp"
         android:layout_marginBottom="16dp"
         android:text="Proximity Sensor"
         app:layout_constraintBottom_toBottomOf="@+id/label_light"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.46" />
+        app:layout_constraintVertical_bias="0.828" />
+
     <TextView
         android:id="@+id/label_temp"
         android:layout_width="227dp"
         android:layout_height="23dp"
         android:layout_marginLeft="204dp"
-        android:layout_marginEnd="28dp"
+        android:layout_marginEnd="68dp"
         android:layout_marginBottom="16dp"
         android:text="Temperature Sensor"
         app:layout_constraintBottom_toBottomOf="@+id/label_proximity"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.46" />
+        app:layout_constraintVertical_bias="0.794" />
+
     <TextView
         android:id="@+id/label_press"
         android:layout_width="227dp"
         android:layout_height="23dp"
         android:layout_marginLeft="204dp"
-        android:layout_marginEnd="28dp"
+        android:layout_marginEnd="68dp"
         android:layout_marginBottom="16dp"
         android:text="Pressure Sensor"
         app:layout_constraintBottom_toBottomOf="@+id/label_temp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.46" />
+        app:layout_constraintVertical_bias="0.623" />
+
+    <Button
+        android:id="@+id/pattern_btn"
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="108dp"
+        android:onClick="openPatternView"
+        android:text="Pattern Lock"
+        app:layout_constraintBottom_toTopOf="@+id/password_btn"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/label_light" />
+
+    <Button
+        android:id="@+id/password_btn"
+        android:layout_width="200dp"
+        android:layout_height="50dp"
+        android:onClick="openPasswordView"
+        android:text="Password Lock"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/pattern_btn" />
 </androidx.constraintlayout.widget.ConstraintLayout>
