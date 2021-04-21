@@ -107,6 +107,5 @@ public class MyService extends Service implements SensorEventListener {
             writer.close();
         } catch (Exception e) {
         }
-
     }
 }
