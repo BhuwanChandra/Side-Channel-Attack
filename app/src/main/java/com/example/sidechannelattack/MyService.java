@@ -25,6 +25,7 @@ public class MyService extends Service implements SensorEventListener {
     private SensorManager mSensorManager;
     private static String fileName;
     private static String filePath;
+    private static long count = 0;
     private static File f;
     private static String baseDir;
     final static String MY_ACTION = "com.example.sidechannelattack.MyService.MY_ACTION";
@@ -55,6 +56,7 @@ public class MyService extends Service implements SensorEventListener {
             prev.put(sensorName, 0.00f);
         }
         super.onCreate();
+        count = System.currentTimeMillis();
         Log.d("MyService", "onCreate");
     }
 
@@ -99,10 +101,11 @@ public class MyService extends Service implements SensorEventListener {
         prev.put(sensorName, prevValue);
         f = new File(filePath);
         try {
+            long idxTime = System.currentTimeMillis() - count;
             FileWriter fOut = new FileWriter(filePath, true);
             CSVWriter writer = new CSVWriter(fOut);
             String temp = Float.toString(currentValue);
-            String[] data = {temp, Long.toString(time), date.toString()};
+            String[] data = {temp, Long.toString(time), date.toString(), Long.toString(idxTime)};
             writer.writeNext(data, false);
             writer.close();
         } catch (Exception e) {
