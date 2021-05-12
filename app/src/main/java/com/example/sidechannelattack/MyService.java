@@ -1,9 +1,8 @@
 package com.example.sidechannelattack;
-import android.Manifest;
+
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -11,14 +10,9 @@ import android.hardware.SensorManager;
 import android.os.IBinder;
 import android.util.Log;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import com.opencsv.CSVWriter;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.Date;
 import java.util.*;
 public class MyService extends Service implements SensorEventListener {
@@ -27,7 +21,7 @@ public class MyService extends Service implements SensorEventListener {
     private static String filePath;
     private static long count = 0;
     private static File f;
-    private static String baseDir;
+    private static File baseDir;
     final static String MY_ACTION = "com.example.sidechannelattack.MyService.MY_ACTION";
     HashMap<String, Float> prev = new HashMap<String, Float>();
     List<Sensor> sensorsList = new ArrayList<Sensor>();
@@ -41,10 +35,11 @@ public class MyService extends Service implements SensorEventListener {
     @Override
     public void onCreate() {
         File file = new File(android.os.Environment.getExternalStorageDirectory()+"/SCA");
-        if(!file.exists())
-            file.mkdir();
-        //String baseDir = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
-        baseDir = file.getAbsolutePath();
+        boolean dirCreated = file.mkdirs();
+        if(!file.exists()) {
+            System.out.println("Directory created!!: " + dirCreated);
+        }
+        baseDir = file;
         mSensorManager = (SensorManager) getSystemService(
                 Context.SENSOR_SERVICE);
         List<Sensor> availableSensors = mSensorManager.getSensorList(Sensor.TYPE_ALL);
@@ -62,7 +57,6 @@ public class MyService extends Service implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        //String baseDir = android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
         int sensorType = event.sensor.getType();
         float currentValue = event.values[0];
         long time = event.timestamp;
@@ -89,26 +83,35 @@ public class MyService extends Service implements SensorEventListener {
     public void WriteSensorValue(SensorEvent event) {
         int sensorType = event.sensor.getType();
         String sensorName = event.sensor.getName();
+        if(!baseDir.exists()) {
+            baseDir.mkdirs();
+        }
         float prevValue = prev.get(sensorName);
         float currentValue = event.values[0];
-        System.out.println("Name is "+ sensorName + " Value is " + currentValue);
+        System.out.println("1. Name is "+ sensorName + " Value is " + currentValue);
         long time = event.timestamp;
         Date date = java.util.Calendar.getInstance().getTime();
         if (currentValue == prevValue)
             return;
         fileName = sensorName + ".csv";
-        filePath = baseDir + File.separator + fileName;
-        prev.put(sensorName, prevValue);
+        filePath = baseDir.getAbsolutePath() + File.separator + fileName;
+        prev.put(sensorName, currentValue);
         f = new File(filePath);
         try {
             long idxTime = System.currentTimeMillis() - count;
-            FileWriter fOut = new FileWriter(filePath, true);
+            FileWriter fOut = new FileWriter(f, true);
             CSVWriter writer = new CSVWriter(fOut);
             String temp = Float.toString(currentValue);
-            String[] data = {temp, Long.toString(time), date.toString(), Long.toString(idxTime)};
+            String[] data = {temp, Long.toString(time), date.toString(), Long.toString(idxTime), System.nanoTime() + ""};
+            System.out.println("2. Name is "+ sensorName + " Value is " + currentValue);
+            if(f.length() == 0) {
+                String[] heads = {"Value", "timestamp", "DateString", "time-diff", "systemNanoTime"};
+                writer.writeNext(heads, false);
+            }
             writer.writeNext(data, false);
             writer.close();
         } catch (Exception e) {
+            System.out.println(e);
         }
     }
 }
