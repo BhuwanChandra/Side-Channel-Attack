@@ -2,10 +2,7 @@ package com.example.sidechannelattack;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -14,19 +11,12 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
 import android.view.View;
-import android.widget.TextView;
-
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 public class MainActivity extends Activity {
     Intent i;
-    private BroadcastReceiver myBroadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-        }
-    };
 
     public void openPatternView(View view) {
         Intent intent = new Intent(this, PatternView.class);
@@ -38,6 +28,13 @@ public class MainActivity extends Activity {
         startActivity(intent);
     }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+        Intent serviceIntent = new Intent(this, BackgroundWorker.class);
+        stopService(serviceIntent);
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,9 +43,9 @@ public class MainActivity extends Activity {
         if (ContextCompat.checkSelfPermission(
                 this, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
                 PackageManager.PERMISSION_GRANTED || (Build.VERSION.SDK_INT >= 30 && Environment.isExternalStorageManager())) {
-            i = new Intent(MainActivity.this, MyService.class);
-            startService(i);
-            registerReceiver(myBroadcastReceiver, new IntentFilter(MyService.MY_ACTION));
+            Intent serviceIntent = new Intent(this, BackgroundWorker.class);
+            System.out.println("SERVICE STARTED!!!");
+            ContextCompat.startForegroundService(this, serviceIntent);
         } else
             {
                 if(Build.VERSION.SDK_INT >= 30) {
@@ -61,16 +58,10 @@ public class MainActivity extends Activity {
                     String[] permission = { Manifest.permission.WRITE_EXTERNAL_STORAGE };
                     ActivityCompat.requestPermissions(MainActivity.this, permission, 0);
                 }
+
+                Intent serviceIntent = new Intent(this, BackgroundWorker.class);
+                System.out.println("SERVICE STARTED!!!");
+                ContextCompat.startForegroundService(this, serviceIntent);
         }
-        i = new Intent(MainActivity.this, MyService.class);
-//        new Runnable() {
-//            @Override
-//            public void run() {
-//                startService(i);
-//            }
-//        };
-//        startService(i);
-//        startService(i);
-        registerReceiver(myBroadcastReceiver, new IntentFilter(MyService.MY_ACTION));
     }
 }
