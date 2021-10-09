@@ -13,7 +13,6 @@ import com.opencsv.CSVWriter;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -55,7 +54,7 @@ public class PatternView extends AppCompatActivity {
                 Date currDate = Calendar.getInstance().getTime();
 
                 File f = new File(filePath);
-                FileWriter fOut = null;
+                FileWriter fOut;
                 try {
                     fOut = new FileWriter(filePath, true);
                     CSVWriter writer = new CSVWriter(fOut);
@@ -78,11 +77,7 @@ public class PatternView extends AppCompatActivity {
 
                     writer.writeNext(data, false);
                     writer.close();
-                    new android.os.Handler().postDelayed( new Runnable() {
-                        public void run() {
-                            patternLockView.clearPattern();
-                        }
-                    }, 2000);
+                    new android.os.Handler().postDelayed(() -> patternLockView.clearPattern(), 2000);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

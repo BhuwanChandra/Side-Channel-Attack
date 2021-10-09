@@ -1,6 +1,10 @@
 package com.example.sidechannelattack;
 
-import android.app.*;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
@@ -8,19 +12,19 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
-import android.os.Environment;
 import android.os.IBinder;
+
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -28,18 +32,12 @@ public class BackgroundWorker extends Service {
 
     boolean writeLock = false;
     String CHANNEL_ID = "SCANotification";
-    private SensorManager sensorManager;
-    private SensorEventListener listener;
     private ArrayList<Reading> data;
     private Thread worker;
     private static long startTime = 0;
     private static ConcurrentHashMap<String, Float> prevValues;
 
     public BackgroundWorker() {
-        super();
-    }
-
-    public BackgroundWorker(String name) {
         super();
     }
 
@@ -65,7 +63,7 @@ public class BackgroundWorker extends Service {
         startForeground(1, notification);
 
 
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         data = new ArrayList<>();
         final List<Sensor> deviceSensors = sensorManager.getSensorList(Sensor.TYPE_ALL);
 
@@ -76,17 +74,25 @@ public class BackgroundWorker extends Service {
         }
 
         if(startTime == 0) startTime = System.currentTimeMillis();
-        listener = new SensorEventListener() {
+        SensorEventListener listener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
-//                for (int i = 0; i < event.values.length; i++) {
-//                    if (!writeLock) {
-//                        Reading reading = new Reading(Calendar.getInstance().getTime().toString(), System.nanoTime(), event.sensor.getName(), event.values[i]);
-//                        data.add(reading);
-//                    }
-//                }
 
-                Reading reading = new Reading(Calendar.getInstance().getTime().toString(), System.nanoTime(), event.sensor.getName(), event.values[0]);
+                float currentValue = event.values[0];
+                String sensorName = event.sensor.getName();
+                String lowerName = sensorName.toLowerCase();
+                if(lowerName.contains("acceleration") || lowerName.contains("gyroscope") || lowerName.contains("accelerometer")) {
+                    String[] dirs = { "-x", "-y", "-z" };
+                    double mod = 0.0;
+                    for(int i = 0; i < 3; i++) {
+                        mod += Math.pow(event.values[i], 2);
+                        Reading reading = new Reading(Calendar.getInstance().getTime().toString(), System.nanoTime(), sensorName + dirs[i], event.values[i]);
+                        data.add(reading);
+                    }
+                    currentValue = (float) Math.sqrt(mod);
+                }
+
+                Reading reading = new Reading(Calendar.getInstance().getTime().toString(), System.nanoTime(), sensorName, currentValue);
                 data.add(reading);
             }
 
@@ -100,18 +106,15 @@ public class BackgroundWorker extends Service {
             sensorManager.registerListener(listener, S, SensorManager.SENSOR_DELAY_NORMAL);
         }
 
-        worker = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    writeLock = true;
-                    writeFile();
-                    writeLock = false;
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+        worker = new Thread(() -> {
+            while (true) {
+                writeLock = true;
+                writeFile();
+                writeLock = false;
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -135,17 +138,17 @@ public class BackgroundWorker extends Service {
             }
 
             HashMap<String, ArrayList<String>> currentData = new HashMap<>();
-            ArrayList<Reading> collectedData = (ArrayList<Reading>) data.clone();
+            ArrayList<Reading> collectedData = new ArrayList<>(data);
             data.clear();
             System.out.println("Data Remaining: " + data.size());
 
             for (Iterator<Reading> iterator = collectedData.iterator(); iterator.hasNext();) {
                 Reading r = iterator.next();
                 String line = r.value + "," + r.date + "," + r.systemNanoSec + "," + r.timeDiff + "\n";
-                if(prevValues.get(r.sensorName) == r.value) continue;
+                if(prevValues.containsKey(r.sensorName) && Objects.equals(prevValues.get(r.sensorName), r.value)) continue;
                 else prevValues.put(r.sensorName, r.value);
                 if(currentData.containsKey(r.sensorName)) {
-                    currentData.get(r.sensorName).add(line);
+                    Objects.requireNonNull(currentData.get(r.sensorName)).add(line);
                 } else {
                     ArrayList<String> arr = new ArrayList<>();
                     arr.add(line);
@@ -154,18 +157,17 @@ public class BackgroundWorker extends Service {
                 iterator.remove();
             }
 
-            for (HashMap.Entry mapElement : currentData.entrySet()) {
-                String key = (String)mapElement.getKey();
+            for (java.util.Map.Entry<String, ArrayList<String>> mapElement : currentData.entrySet()) {
+                String key = mapElement.getKey();
                 List<String> sensorData = currentData.get(key);
+                assert sensorData != null;
                 String str = sensorData.stream().collect(Collectors.joining(""));
-                System.out.println("Sensor: " + key.replaceAll(" ", ""));
+                System.out.println("SensorName ===>>>>>" + key.replaceAll(" ", "_"));
                 if(sensorData.size() > 0) {
-                    String fileName = key.replaceAll(" ", "") + ".csv";
+                    String fileName = key.replaceAll(" ", "_") + ".csv";
                     String filePath = baseDir.getAbsolutePath() + File.separator + fileName;
                     File f = new File(filePath);
                     FileWriter mFileWriter;
-                    System.out.println(filePath);
-                    // File exist
                     if (f.exists() && !f.isDirectory()) {
                         mFileWriter = new FileWriter(filePath, true);
                     } else {
@@ -193,7 +195,7 @@ public class BackgroundWorker extends Service {
         }
     }
 
-    class Reading {
+    static class Reading {
         String date;
         long systemNanoSec;
         String sensorName;

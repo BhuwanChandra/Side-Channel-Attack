@@ -17,14 +17,11 @@ import java.util.Date;
 import java.util.*;
 public class MyService extends Service implements SensorEventListener {
     private SensorManager mSensorManager;
-    private static String fileName;
-    private static String filePath;
     private static long count = 0;
-    private static File f;
     private static File baseDir;
     final static String MY_ACTION = "com.example.sidechannelattack.MyService.MY_ACTION";
-    HashMap<String, Float> prev = new HashMap<String, Float>();
-    List<Sensor> sensorsList = new ArrayList<Sensor>();
+    HashMap<String, Float> prev = new HashMap<>();
+    List<Sensor> sensorsList = new ArrayList<>();
     Intent intent = new Intent(MY_ACTION);
     @Nullable
     @Override
@@ -57,10 +54,6 @@ public class MyService extends Service implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        int sensorType = event.sensor.getType();
-        float currentValue = event.values[0];
-        long time = event.timestamp;
-        Date date =java.util.Calendar.getInstance().getTime();
         WriteSensorValue(event);
         sendBroadcast(intent);
     }
@@ -81,29 +74,43 @@ public class MyService extends Service implements SensorEventListener {
     }
 
     public void WriteSensorValue(SensorEvent event) {
-        int sensorType = event.sensor.getType();
         String sensorName = event.sensor.getName();
         if(!baseDir.exists()) {
-            baseDir.mkdirs();
+            if(!baseDir.mkdirs()) return;
         }
-        float prevValue = prev.get(sensorName);
         float currentValue = event.values[0];
-        System.out.println("1. Name is "+ sensorName + " Value is " + currentValue);
         long time = event.timestamp;
         Date date = java.util.Calendar.getInstance().getTime();
-        if (currentValue == prevValue)
+
+        long idxTime = System.currentTimeMillis() - count;
+
+        if(sensorName.toLowerCase().contains("acceleration") || sensorName.toLowerCase().contains("gyroscope")) {
+            String[] dirs = { "-x", "-y", "-z" };
+            double mod = 0.0;
+            for(int i = 0; i < 3; i++) {
+                mod = Math.pow(event.values[i], 2);
+                String[] data = {Float.toString(event.values[i]), Long.toString(time), date.toString(), Long.toString(idxTime), Long.toString(System.nanoTime())};
+
+                writeInFile(event.values[i], sensorName + dirs[i], data);
+            }
+            currentValue = (float) Math.sqrt(mod);
+        }
+        String[] data = {Float.toString(currentValue), Long.toString(time), date.toString(), Long.toString(idxTime), Long.toString(System.nanoTime())};
+        writeInFile(currentValue, sensorName, data);
+    }
+
+    public void writeInFile(Float curValue, String sensorName, String[] data) {
+        if(!prev.containsKey(sensorName)) prev.put(sensorName, 0.00f);
+        if (curValue.equals(prev.get(sensorName)))
             return;
-        fileName = sensorName + ".csv";
-        filePath = baseDir.getAbsolutePath() + File.separator + fileName;
-        prev.put(sensorName, currentValue);
-        f = new File(filePath);
+        String fileName = sensorName + ".csv";
+        String filePath = baseDir.getAbsolutePath() + File.separator + fileName;
+        prev.put(sensorName, curValue);
+        File f = new File(filePath);
         try {
-            long idxTime = System.currentTimeMillis() - count;
             FileWriter fOut = new FileWriter(f, true);
             CSVWriter writer = new CSVWriter(fOut);
-            String temp = Float.toString(currentValue);
-            String[] data = {temp, Long.toString(time), date.toString(), Long.toString(idxTime), System.nanoTime() + ""};
-            System.out.println("2. Name is "+ sensorName + " Value is " + currentValue);
+            Log.d("MyService", "=====##### Name is "+ sensorName + " &&& Value is " + data[0] + " #####=====");
             if(f.length() == 0) {
                 String[] heads = {"Value", "timestamp", "DateString", "time-diff", "systemNanoTime"};
                 writer.writeNext(heads, false);
@@ -111,7 +118,7 @@ public class MyService extends Service implements SensorEventListener {
             writer.writeNext(data, false);
             writer.close();
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
         }
     }
 }
